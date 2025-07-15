@@ -39,8 +39,12 @@ export default function LoginPage() {
       } else {
         router.push('/user')
       }
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError('予期しないエラーが発生しました')
+      }
     } finally {
       setLoading(false)
     }
