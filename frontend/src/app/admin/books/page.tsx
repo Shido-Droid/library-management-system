@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 
@@ -22,11 +22,9 @@ export default function BooksManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingBook, setEditingBook] = useState<Book | null>(null)
 
-  useEffect(() => {
-    fetchBooks()
-  }, [])
-
-  const fetchBooks = async () => {
+  // fetchBooksをuseCallbackでメモ化し、searchTermとselectedCategoryを依存に含める
+  const fetchBooks = useCallback(async () => {
+    setLoading(true)
     try {
       let query = supabase.from('books').select('*').order('created_at', { ascending: false })
 
@@ -47,7 +45,12 @@ export default function BooksManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [searchTerm, selectedCategory])
+
+  // useEffectでfetchBooksを呼び出し。fetchBooksが依存なので条件変更で再取得される
+  useEffect(() => {
+    fetchBooks()
+  }, [fetchBooks])
 
   const handleDeleteBook = async (bookId: string) => {
     if (!confirm('この本を削除しますか？')) return
@@ -84,14 +87,13 @@ export default function BooksManagement() {
     )
   }
 
-  // --- モーダルのフォーム用の状態（編集・追加用） ---
+  // モーダルのフォーム用状態（編集・追加用）
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [isbn, setIsbn] = useState('')
   const [category, setCategory] = useState('')
   const [status, setStatus] = useState('available')
 
-  // 編集対象の本が変わったらフォームにセット
   useEffect(() => {
     if (editingBook) {
       setTitle(editingBook.title)
@@ -256,7 +258,7 @@ export default function BooksManagement() {
           )}
         </div>
 
-        {/* --- モーダル --- */}
+        {/* モーダル */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
