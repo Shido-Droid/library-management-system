@@ -1,0 +1,7 @@
+{
+  "name": "library-management-system-monorepo",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend"
+  }
+}
