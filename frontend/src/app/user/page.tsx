@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import UserLayout from '@/components/user/UserLayout'
 import BookCard from '@/components/user/BookCard'
@@ -18,16 +18,15 @@ interface Book {
 export default function UserHomePage() {
   const [books, setBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState('')
   const [sortBy, setSortBy] = useState('created_at')
 
   const categories = ['小説', '技術書', 'ビジネス', '歴史', '自己啓発']
 
-  useEffect(() => {
-    fetchBooks()
-  }, [selectedCategory, sortBy])
-
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
+    setLoading(true)
+    setError(null)
     try {
       let query = supabase.from('books').select('*')
 
@@ -35,7 +34,6 @@ export default function UserHomePage() {
         query = query.eq('category', selectedCategory)
       }
 
-      // 並び替え
       switch (sortBy) {
         case 'title':
           query = query.order('title')
@@ -55,10 +53,15 @@ export default function UserHomePage() {
       setBooks(data || [])
     } catch (error) {
       console.error('Error fetching books:', error)
+      setError('本の取得に失敗しました。時間を置いて再度お試しください。')
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedCategory, sortBy])
+
+  useEffect(() => {
+    fetchBooks()
+  }, [fetchBooks])
 
   if (loading) {
     return (
@@ -118,6 +121,11 @@ export default function UserHomePage() {
             </select>
           </div>
         </div>
+
+        {/* エラーメッセージ */}
+        {error && (
+          <div className="bg-red-100 text-red-700 px-4 py-3 rounded">{error}</div>
+        )}
 
         {/* 本の統計 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

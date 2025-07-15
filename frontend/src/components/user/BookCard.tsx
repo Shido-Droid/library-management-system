@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface Book {
   id: string
@@ -49,12 +50,14 @@ export default function BookCard({ book }: BookCardProps) {
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
         <div onClick={() => setShowModal(true)}>
           {/* 本の画像 */}
-          <div className="aspect-w-3 aspect-h-4 bg-gray-200">
+          <div className="relative w-full h-48 bg-gray-200">
             {book.image_url ? (
-              <img
+              <Image
                 src={book.image_url}
                 alt={book.title}
-                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-200"
+                sizes="(max-width: 768px) 100vw, 33vw"
               />
             ) : (
               <div className="w-full h-48 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center group-hover:from-green-200 group-hover:to-green-300 transition-colors duration-200">
@@ -96,6 +99,7 @@ export default function BookCard({ book }: BookCardProps) {
                   <h3 className="text-xl font-bold text-gray-900">{book.title}</h3>
                   <button
                     onClick={() => setShowModal(false)}
+                    aria-label="閉じる"
                     className="text-gray-400 hover:text-gray-600"
                   >
                     X

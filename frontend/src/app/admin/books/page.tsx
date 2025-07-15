@@ -84,6 +84,55 @@ export default function BooksManagement() {
     )
   }
 
+  // --- モーダルのフォーム用の状態（編集・追加用） ---
+  const [title, setTitle] = useState('')
+  const [author, setAuthor] = useState('')
+  const [isbn, setIsbn] = useState('')
+  const [category, setCategory] = useState('')
+  const [status, setStatus] = useState('available')
+
+  // 編集対象の本が変わったらフォームにセット
+  useEffect(() => {
+    if (editingBook) {
+      setTitle(editingBook.title)
+      setAuthor(editingBook.author)
+      setIsbn(editingBook.isbn)
+      setCategory(editingBook.category)
+      setStatus(editingBook.status)
+    } else {
+      setTitle('')
+      setAuthor('')
+      setIsbn('')
+      setCategory('')
+      setStatus('available')
+    }
+  }, [editingBook])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      if (editingBook) {
+        // 更新
+        const { error } = await supabase
+          .from('books')
+          .update({ title, author, isbn, category, status })
+          .eq('id', editingBook.id)
+        if (error) throw error
+      } else {
+        // 新規追加
+        const { error } = await supabase
+          .from('books')
+          .insert([{ title, author, isbn, category, status }])
+        if (error) throw error
+      }
+      setIsModalOpen(false)
+      fetchBooks()
+    } catch (error) {
+      console.error('Error saving book:', error)
+      alert('保存中にエラーが発生しました。')
+    }
+  }
+
   if (loading) {
     return (
       <AdminLayout>
@@ -206,6 +255,91 @@ export default function BooksManagement() {
             <div className="text-center py-8 text-gray-500">本が見つかりませんでした。</div>
           )}
         </div>
+
+        {/* --- モーダル --- */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
+              <h3 className="text-xl font-bold mb-4">{editingBook ? '本を編集' : '新しい本を追加'}</h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">タイトル</label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">著者</label>
+                  <input
+                    type="text"
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">ISBN</label>
+                  <input
+                    type="text"
+                    value={isbn}
+                    onChange={(e) => setIsbn(e.target.value)}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">カテゴリ</label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  >
+                    <option value="">選択してください</option>
+                    <option value="小説">小説</option>
+                    <option value="技術書">技術書</option>
+                    <option value="ビジネス">ビジネス</option>
+                    <option value="歴史">歴史</option>
+                    <option value="自己啓発">自己啓発</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">状態</label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  >
+                    <option value="available">貸出可能</option>
+                    <option value="borrowed">貸出中</option>
+                    <option value="maintenance">修理中</option>
+                  </select>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    保存
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   )
